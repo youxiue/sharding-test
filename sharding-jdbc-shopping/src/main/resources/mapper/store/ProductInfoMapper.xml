@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.youxiue.shopping.modules.store.mapper.ProductInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.youxiue.shopping.modules.store.entity.ProductInfo">
+        <id column="product_info_id" property="productInfoId" />
+        <result column="store_info_id" property="storeInfoId" />
+        <result column="product_name" property="productName" />
+        <result column="spec" property="spec" />
+        <result column="region_code" property="regionCode" />
+        <result column="price" property="price" />
+        <result column="image_url" property="imageUrl" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        product_info_id, store_info_id, product_name, spec, region_code, price, image_url
+    </sql>
+
+</mapper>

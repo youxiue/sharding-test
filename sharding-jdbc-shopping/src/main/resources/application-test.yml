@@ -1,0 +1,110 @@
+spring:
+  shardingsphere:
+    datasource:
+      names: m0, m1, m2, s0, s1, s2
+      m0: # 商店主库
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3306/store_db?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+      m1: # 商品主库
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3306/product_db_1?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+      m2: #商品主库水平库
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3306/product_db_2?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+      s0: # 商店从库
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3307/store_db?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+      s1: # 商品从库
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3307/product_db_1?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+      s2: # 商品从库水平库
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3307/product_db_2?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+    sharding:
+      # 配置主从数据库规则
+      master-slave-rules:
+        ds0:
+          master-data-source-name: m0
+          slave-data-source-names: s0
+        ds1:
+          master-data-source-name: m1
+          slave-data-source-names: s1
+        ds2:
+          master-data-source-name: m2
+          slave-data-source-names: s2
+
+      tables:
+        store_info:
+          actual-data-nodes: ds0.store_info
+          key-generator:
+            column: id
+            type: SNOWFLAKE
+          table-strategy:
+            inline:
+              sharding-column: id
+              algorithm-expression: store_info
+        product_info:
+          actual-data-nodes: ds${1..2}.product_info_${1..2}
+          key-generator:
+            column: product_info_id
+            type: SNOWFLAKE
+          table-strategy:
+            inline:
+              sharding-column: product_info_id
+              algorithm-expression: product_info_${product_info_id % 2 + 1}
+        product_descript:
+          actual-data-nodes: ds${1..2}.product_descript_${1..2}
+          key-generator:
+            column: id
+            type: SNOWFLAKE
+          table-strategy:
+            inline:
+              sharding-column: product_info_id
+              algorithm-expression: product_descript_${product_info_id % 2 + 1}
+      # 配置公共表
+      broadcast-tables: region
+      # 配置默认分库策略
+      default-database-strategy:
+        inline:
+          sharding-column: store_info_id
+          algorithm-expression: ds${store_info_id % 2 + 1}
+      # 将 product_info ,product_descript 配置为绑定表,  不加[0]会产生笛卡尔积
+      binding-tables[0]: product_info, product_descript
+    props:
+      sql.show: true
+
+
+  datasource:
+    hikari:
+      minimum-idle: 5
+      # 空闲连接存活最大时间，默认600000（10分钟）
+      idle-timeout: 180000
+      # 连接池最大连接数，默认是10
+      maximum-pool-size: 10
+      # 此属性控制从池返回的连接的默认自动提交行为,默认值：true
+      auto-commit: true
+      # 连接池名称
+      pool-name: MyHikariCP
+      # 此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+      max-lifetime: 1800000
+      # 数据库连接超时时间,默认30秒，即30000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1 FROM DUAL

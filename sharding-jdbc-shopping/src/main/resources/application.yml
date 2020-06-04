@@ -1,0 +1,31 @@
+server:
+  servlet:
+    context-path: /sharding/v1
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 1000
+    min-spare-threads: 30
+  port: 9528
+
+spring:
+  profiles:
+    active: test
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  mvc:
+    throw-exception-if-no-handler-found: true
+
+#mybatis
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*Mapper.xml
+  typeAliasesPackage: com.youxiue.shopping.modules.*.entity
+  global-config:
+    db-config:
+      id-type: input
+    banner: false
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: false
+    jdbc-type-for-null: 'null'

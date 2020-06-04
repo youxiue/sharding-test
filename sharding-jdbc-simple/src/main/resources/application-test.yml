@@ -1,0 +1,82 @@
+spring:
+  shardingsphere:
+    datasource:
+      names: m0, m1, m2, s0
+      m0:
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3306/user_db?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+        driver-class-name: com.mysql.cj.jdbc.Driver
+      m1:
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3306/order_db_1?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+        driver-class-name: com.mysql.cj.jdbc.Driver
+      m2:
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3306/order_db_2?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+        driver-class-name: com.mysql.cj.jdbc.Driver
+      s0:
+        type: com.zaxxer.hikari.HikariDataSource
+        jdbc-url: jdbc:mysql://localhost:3307/user_db?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    sharding:
+      # 配置主从数据库规则
+      master-slave-rules:
+        ds0:
+          master-data-source-name: m0
+          slave-data-source-names: s0
+      tables:
+        t_order:
+          actual-data-nodes: m${1..2}.t_order_${1..2}
+          key-generator:
+            column: order_id
+            type: SNOWFLAKE
+          table-strategy:
+            inline:
+              sharding-column: order_id
+              algorithm-expression: t_order_${order_id % 2 + 1}
+          # 分库规则
+          database-strategy:
+            inline:
+              sharding-column: user_id
+              algorithm-expression: m${user_id % 2 + 1}
+        t_user:
+#          actual-data-nodes: m0.t_user
+          # 原本是m0的, 现在配置了主从数据库, 指定为主从数据库ds0
+          actual-data-nodes: ds0.t_user
+          table-strategy:
+            inline:
+              sharding-column: user_id
+              algorithm-expression: t_user
+
+      # 配置默认数据源
+      default-data-source-name: m1
+      # 配置公共表
+      broadcast-tables: t_dict
+    props:
+      sql.show: true
+
+
+  datasource:
+    hikari:
+      minimum-idle: 5
+      # 空闲连接存活最大时间，默认600000（10分钟）
+      idle-timeout: 180000
+      # 连接池最大连接数，默认是10
+      maximum-pool-size: 10
+      # 此属性控制从池返回的连接的默认自动提交行为,默认值：true
+      auto-commit: true
+      # 连接池名称
+      pool-name: MyHikariCP
+      # 此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+      max-lifetime: 1800000
+      # 数据库连接超时时间,默认30秒，即30000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1 FROM DUAL

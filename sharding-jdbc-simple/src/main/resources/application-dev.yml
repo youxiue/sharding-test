@@ -1,0 +1,47 @@
+spring:
+  shardingsphere:
+    datasource:
+      names: m1
+      m1:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://localhost:3306/order_db?serverTimezone=Asia/Shanghai&useSSL=false&useUnicode=true&characterEncoding=utf-8
+        username: root
+        password: root
+    # 指定表的 数据分布情况, 配置数据节点
+    sharding:
+      tables:
+        t_order: # 这个是逻辑表名
+          # 配置数据节点, 即逻辑表名最终会指向的实际表名
+          # 这里意思是 sql 中写t_order 会指向节点 t_order_1 或 t_order_2表
+          actual-data-nodes: m1.t_order_${1..2}
+          #配置主键生成策略为 雪花算法
+          key-generator:
+            column: order_id
+            type: SNOWFLAKE
+          #配置分片策略, 指定分片键和分片算法 , 这里是id计算为偶数的指向表t_order_1, 计算为奇数的会指向表t_order_2
+          table-strategy:
+            inline:
+              sharding-column: order_id
+              algorithm-expression: t_order_${order_id % 2 + 1}
+      default-data-source-name: m1
+
+    props:
+      sql.show: true
+
+  datasource:
+    hikari:
+      minimum-idle: 5
+      # 空闲连接存活最大时间，默认600000（10分钟）
+      idle-timeout: 180000
+      # 连接池最大连接数，默认是10
+      maximum-pool-size: 10
+      # 此属性控制从池返回的连接的默认自动提交行为,默认值：true
+      auto-commit: true
+      # 连接池名称
+      pool-name: MyHikariCP
+      # 此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+      max-lifetime: 1800000
+      # 数据库连接超时时间,默认30秒，即30000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1 FROM DUAL
