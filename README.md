@@ -1,5 +1,6 @@
 # sharding-test
 
+## Mysql数据库主从备份(window环境)
 ### 1. 将现有的数据库拷贝一份, mysql-5.7(作为主库) -> mysql-5.7-s1(作为从库)
 
 1. 安装位置
